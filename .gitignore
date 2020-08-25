@@ -101,3 +101,6 @@ gradle-app.setting
 
 # Cache of project
 .gradletasknamecache
+
+# Ignore def files that are generated with gradle
+*.def
