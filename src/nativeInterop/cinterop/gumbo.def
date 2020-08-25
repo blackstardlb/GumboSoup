@@ -1,0 +1,5 @@
+headers = include/gumbo.h
+compilerOpts = -Ibuild/gumbo-parser/output
+linkerOpts = -L/home/dbrison/Projects/Kumbo/build/gumbo-parser/output/lib -lgumbo -rpath /home/dbrison/Projects/Kumbo/build/gumbo-parser/output/lib
+staticLibraries = libgumbo.a libgumbo.la libgumbo.so libgumbo.so.1 libgumbo.so.1.0.0
+libraryPaths = /home/dbrison/Projects/Kumbo/build/gumbo-parser/output/lib 
