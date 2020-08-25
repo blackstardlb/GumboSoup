@@ -24,6 +24,7 @@ ext {
 
 task generateDefFile() {
     if (!file(gumbo_def_file).exists()) {
+        file(gumbo_def_file).getParentFile().mkdirs()
         gumbo_def_file.text = """headers = include/gumbo.h
 compilerOpts = -Ibuild/gumbo-parser/output
 staticLibraries = libgumbo.a libgumbo.la libgumbo.so libgumbo.so.1 libgumbo.so.1.0.0
