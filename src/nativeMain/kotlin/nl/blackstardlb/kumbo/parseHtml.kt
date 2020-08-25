@@ -1,5 +1,7 @@
 package nl.blackstardlb.GumboSoup
 
+import nl.blackstardlb.kumbo.NativeParser
+
 actual fun parseHtml(html: String): Node {
-    return Gumbo().parse(html)
+    return NativeParser().parse(html)
 }

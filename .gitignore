@@ -104,3 +104,4 @@ gradle-app.setting
 
 # Ignore def files that are generated with gradle
 *.def
+local.properties

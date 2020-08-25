@@ -1,2 +1,2 @@
-rootProject.name = 'GumboSoup'
+rootProject.name = 'gumbo-soup'
 include 'src:nativeInterop'

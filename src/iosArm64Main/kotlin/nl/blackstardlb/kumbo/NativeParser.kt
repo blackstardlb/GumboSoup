@@ -1,12 +1,13 @@
-package nl.blackstardlb.GumboSoup
+package nl.blackstardlb.kumbo
 
 import gumbo.*
 import kotlinx.cinterop.*
-import platform.posix.*
+import nl.blackstardlb.GumboSoup.Node
 
-class Gumbo {
-    fun parse(html: String): Node {
-        val options = kGumboDefaultOptions
+actual class NativeParser actual constructor() {
+    private val options = kGumboDefaultOptions
+
+    actual fun parse(html: String): Node {
         val output = gumbo_parse_with_options(options.ptr, html, html.length.toULong())
         val toGumboSoupNode = output!!.pointed.root!!.reinterpret<GumboNode>().pointed.toGumboSoupNode()
         gumbo_destroy_output(options.ptr, output)
@@ -54,31 +55,10 @@ class Gumbo {
         return this.type == GumboNodeType.GUMBO_NODE_TEXT || return this.type == GumboNodeType.GUMBO_NODE_WHITESPACE || return this.type == GumboNodeType.GUMBO_NODE_COMMENT
     }
 
-    fun readFile(fileName: String): String {
-        val f = fopen(fileName, "rb")
-        fseek(f, 0, SEEK_END)
-        val fsize = ftell(f).toULong()
-        rewind(f)
-
-        val buff = ByteArray(fsize.toInt())
-        buff.usePinned {
-            val result = fread(it.addressOf(0), 1, fsize, f)
-            if (result != fsize) {
-                throw Exception("Reading error")
-            }
-        }
-        fclose(f)
-        return buff.toKString()
-    }
-
     inline fun <reified T : CPointed> GumboVector.toList(): List<T> {
         val length = this.length.toInt()
         return (0 until length).mapNotNull { this.data?.get(it)?.reinterpret<T>()?.pointed }
             .toList()
-    }
-
-    fun GumboAttribute.print(): Unit {
-        println("${this.name?.toKString()} : ${this.value?.toKString()}")
     }
 
     fun GumboNode.toGumboSoupNode(parent: Node? = null): Node {

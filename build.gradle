@@ -1,4 +1,12 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests
+buildscript {
+    dependencies {
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
+    }
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+}
 
 plugins {
     id 'org.jetbrains.kotlin.multiplatform' version '1.4.0'
@@ -6,12 +14,16 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'nl.blackstardlb'
-version = '0.0.2'
-
 repositories {
+    jcenter()
     mavenCentral()
 }
+
+def localProperties = new Properties()
+localProperties.load(rootProject.file('local.properties').newDataInputStream())
+
+group = 'nl.blackstardlb'
+version = '0.0.2'
 
 ext {
     gumbo_dir = new File(buildDir, "gumbo-parser")
@@ -20,11 +32,12 @@ ext {
     gumbo_script = new File(projectDir, "scripts/make-gumbo.sh")
     gumbo_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumbo.def")
     gumbo_lib_dir = new File(gumbo_dir, "output/lib")
+    bintrayUser = localProperties.get("bintrayUser")
+    bintrayApiKey = localProperties.get("bintrayApiKey")
 }
 
 task generateDefFile() {
     if (!gumbo_def_file.exists()) {
-        println "Wut?"
         gumbo_def_file.createNewFile()
         gumbo_def_file.text = """headers = include/gumbo.h
 compilerOpts = -Ibuild/gumbo-parser/output
@@ -34,24 +47,37 @@ libraryPaths = $gumbo_lib_dir
     }
 }
 
+def hostOs = System.getProperty("os.name")
+def isLinux = hostOs == "Linux"
+
 kotlin {
     jvm {
         compilations.all {
             kotlinOptions.jvmTarget = '1.8'
         }
     }
-    def hostOs = System.getProperty("os.name")
-    def isMingwX64 = hostOs.startsWith("Windows")
-    KotlinNativeTargetWithTests nativeTarget
-    if (hostOs == "Mac OS X") nativeTarget = macosX64('native')
-    else if (hostOs == "Linux") nativeTarget = linuxX64("native")
-    else if (isMingwX64) nativeTarget = mingwX64("native")
-    else throw new GradleException("Host OS is not supported in Kotlin/Native.")
-
-    nativeTarget.compilations.main.cinterops {
-        gumbo
+    ios() {
+        compilations.main.cinterops {
+            gumbo
+        }
     }
-
+    macosX64('macos') {
+        compilations.main.cinterops {
+            gumbo
+        }
+    }
+    linuxX64("linux") {
+        compilations.main.cinterops {
+            gumbo
+        }
+    }
+    configure([targets["metadata"], jvm()]) {
+        mavenPublication { targetPublication ->
+            tasks.withType(AbstractPublishToMaven)
+                    .matching { it.publication == targetPublication }
+                    .all { onlyIf { isLinux } }
+        }
+    }
     sourceSets {
         commonMain {
 
@@ -61,6 +87,30 @@ kotlin {
                 implementation kotlin('test-common')
                 implementation kotlin('test-annotations-common')
             }
+        }
+        nativeMain {
+            dependsOn(commonMain)
+        }
+        nativeTest {
+            dependsOn(commonTest)
+        }
+        linuxMain {
+            dependsOn(nativeMain)
+        }
+        linuxTest {
+            dependsOn(nativeTest)
+        }
+        macosMain {
+            dependsOn(nativeMain)
+        }
+        macosTest {
+            dependsOn(nativeTest)
+        }
+        iosMain {
+            dependsOn(nativeMain)
+        }
+        iosTest {
+            dependsOn(nativeTest)
         }
         jvmMain {
             dependencies {
@@ -72,13 +122,15 @@ kotlin {
                 implementation kotlin('test-junit')
             }
         }
-        nativeMain {
-
-        }
-        nativeTest {
-
-        }
     }
+}
+
+def getBintrayUserProperty() {
+    return bintrayUser != null ? bintrayUser : System.getenv('BINTRAY_USER')
+}
+
+def getBintrayApiKeyProperty() {
+    return bintrayApiKey != null ? bintrayApiKey : System.getenv('BINTRAY_API_KEY')
 }
 
 task cleanGumbo(type: Delete) {
@@ -103,16 +155,20 @@ task makeGumbo(type: Exec) {
     commandLine "$gumbo_script"
 }
 
-tasks.cinteropGumboNative.dependsOn("makeGumbo")
+tasks.each {
+    if (it.name.startsWith("cinteropGumbo")) {
+        it.dependsOn("makeGumbo")
+    }
+}
 
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/blackstardlb/GumboSoup"
+            name = "Bintray"
+            url = uri("https://api.bintray.com/maven/blackstardlb/GumboSoup/gumbo-soup/;publish=1;override=1")
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = getBintrayUserProperty()
+                password = getBintrayApiKeyProperty()
             }
         }
     }
