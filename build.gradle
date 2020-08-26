@@ -20,8 +20,10 @@ repositories {
 }
 
 def localProperties = new Properties()
-localProperties.load(rootProject.file('local.properties').newDataInputStream())
-
+def propertiesFile = rootProject.file('local.properties')
+if (propertiesFile.exists()) {
+    localProperties.load(propertiesFile.newDataInputStream())
+}
 group = 'nl.blackstardlb'
 version = '0.0.2'
 
