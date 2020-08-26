@@ -84,11 +84,18 @@ kotlin {
         }
     }
 
-    ios() {
+    iosX64() {
         compilations.main.cinterops {
             gumbo
         }
     }
+
+    iosArm64() {
+        compilations.main.cinterops {
+            gumbo
+        }
+    }
+
     macosX64('macos') {
         compilations.main.cinterops {
             gumbo
