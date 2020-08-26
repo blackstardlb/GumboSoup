@@ -79,7 +79,7 @@ kotlin {
             }
         }
     }
-    configure([targets["metadata"], jvm(), linuxX64("linux")]) {
+    configure([targets["metadata"], jvm()]) {
         mavenPublication { targetPublication ->
             tasks.withType(AbstractPublishToMaven)
                     .matching { it.publication == targetPublication }
