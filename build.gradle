@@ -62,9 +62,18 @@ gradle.taskGraph.whenReady { taskGraph ->
     println "Tasks"
     def test = taskGraph.getAllTasks().find { it.name == "generateMetadataFileForKotlinMultiplatformPublication" }
     if (test != null) {
-        isRelease = true
         def nTarget = kotlin.targets.find { it.name == "native" }
         kotlin.targets.remove(nTarget)
+    }
+    taskGraph.getAllTasks().each {
+        if ((it.name.endsWith("Native") || it.name.startsWith("native")) && it.name != "cinteropGumboNative") {
+            it.onlyIf { false }
+        }
+        if (!isLinux) {
+            if (it.name.endsWith("Linux") || it.name.startsWith("linux")) {
+                it.onlyIf { false }
+            }
+        }
     }
 }
 
@@ -85,11 +94,9 @@ kotlin {
         }
     }
 
-    if (isLinux) {
-        linuxX64("linux") {
-            compilations.main.cinterops {
-                gumbo
-            }
+    linuxX64("linux") {
+        compilations.main.cinterops {
+            gumbo
         }
     }
 
