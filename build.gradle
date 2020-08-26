@@ -44,8 +44,7 @@ task generateDefFile() {
         gumbo_def_file.text = """headers = include/gumbo.h
 compilerOpts = -Ibuild/gumbo-parser/output
 staticLibraries.linux_x64 = libgumbo.a libgumbo.la libgumbo.so libgumbo.so.1 libgumbo.so.1.0.0
-staticLibraries.mac_x64 = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
-staticLibraries.ios_x64 = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
+staticLibraries = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
 libraryPaths = $gumbo_lib_dir 
 """
     }
@@ -75,7 +74,7 @@ kotlin {
             gumbo
         }
     }
-    configure([targets["metadata"], jvm()]) {
+    configure([targets["metadata"], jvm(), linuxX64()]) {
         mavenPublication { targetPublication ->
             tasks.withType(AbstractPublishToMaven)
                     .matching { it.publication == targetPublication }
