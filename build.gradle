@@ -189,3 +189,9 @@ tasks.withType(org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeHost
         environment 'RESOURCES_FOLDER', "$test_resources_folder/"
     }
 }
+
+tasks.withType(org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest_Decorated) {
+    doFirst {
+        environment 'SIMCTL_CHILD_RESOURCES_FOLDER', "$test_resources_folder/"
+    }
+}
