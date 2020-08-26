@@ -78,7 +78,7 @@ kotlin {
                 gumbo
             }
         }
-    }git
+    }
     configure([targets["metadata"], jvm(), linuxX64("linux")]) {
         mavenPublication { targetPublication ->
             tasks.withType(AbstractPublishToMaven)
