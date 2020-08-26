@@ -34,6 +34,7 @@ ext {
     gumbo_script = new File(projectDir, "scripts/make-gumbo.sh")
     gumbo_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumbo.def")
     gumbo_lib_dir = new File(gumbo_dir, "output/lib")
+    test_resources_folder = new File(projectDir, "src/commonTest/resources")
     bintrayUser = localProperties.get("bintrayUser")
     bintrayApiKey = localProperties.get("bintrayApiKey")
 }
@@ -180,5 +181,11 @@ publishing {
                 password = getBintrayApiKeyProperty()
             }
         }
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeHostTest_Decorated) {
+    doFirst {
+        environment 'RESOURCES_FOLDER', "$test_resources_folder/"
     }
 }

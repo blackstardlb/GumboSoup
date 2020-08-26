@@ -26,13 +26,14 @@ actual class ResourceLoader actual constructor() {
     }
 
     private fun getResourceDir(): String {
-        var workingDir = this.getWorkingDir()
-        val segments = workingDir.split("/")
-        if (segments.lastOrNull() == "debugTest") {
-            workingDir = segments.subList(0, segments.size - 4).joinToString("/")
-        }
-        workingDir = workingDir + "/src/commonTest/resources/"
-        return workingDir
+        return getenv("RESOURCES_FOLDER")!!.toKString()
+//        var workingDir = this.getWorkingDir()
+//        val segments = workingDir.split("/")
+//        if (segments.lastOrNull() == "debugTest") {
+//            workingDir = segments.subList(0, segments.size - 4).joinToString("/")
+//        }
+//        workingDir = workingDir + "/src/commonTest/resources/"
+//        return workingDir
     }
 
     private fun getWorkingDir(): String {
