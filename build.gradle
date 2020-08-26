@@ -14,9 +14,6 @@ plugins {
     id 'maven-publish'
 }
 
-//import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest_Decorated
-//import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeHostTest_Decorated
-
 repositories {
     jcenter()
     mavenCentral()
@@ -28,7 +25,7 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.2'
+version = '0.0.3'
 
 ext {
     gumbo_dir = new File(buildDir, "gumbo-parser")
@@ -59,7 +56,6 @@ def hostOs = System.getProperty("os.name")
 def isLinux = hostOs == "Linux"
 
 gradle.taskGraph.whenReady { taskGraph ->
-    println "Tasks"
     def test = taskGraph.getAllTasks().find { it.name == "generateMetadataFileForKotlinMultiplatformPublication" }
     if (test != null) {
         def nTarget = kotlin.targets.find { it.name == "native" }

@@ -28,12 +28,4 @@ actual class ResourceLoader actual constructor() {
     private fun getResourceDir(): String {
         return getenv("RESOURCES_FOLDER")!!.toKString()
     }
-
-    private fun getWorkingDir(): String {
-        val path = ByteArray(PATH_MAX)
-        path.usePinned {
-            getcwd(it.addressOf(0), PATH_MAX)
-        }
-        return path.toKString()
-    }
 }
