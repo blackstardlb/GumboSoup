@@ -14,9 +14,6 @@ plugins {
     id 'maven-publish'
 }
 
-//import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest_Decorated
-//import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeHostTest_Decorated
-
 repositories {
     jcenter()
     mavenCentral()
@@ -28,7 +25,7 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.2'
+version = '0.0.3'
 
 ext {
     gumbo_dir = new File(buildDir, "gumbo-parser")
@@ -58,39 +55,71 @@ libraryPaths = $gumbo_lib_dir
 def hostOs = System.getProperty("os.name")
 def isLinux = hostOs == "Linux"
 
+gradle.taskGraph.whenReady { taskGraph ->
+    def test = taskGraph.getAllTasks().find { it.name == "generateMetadataFileForKotlinMultiplatformPublication" }
+    if (test != null) {
+        def nTarget = kotlin.targets.find { it.name == "native" }
+        kotlin.targets.remove(nTarget)
+    }
+    taskGraph.getAllTasks().each {
+        if ((it.name.contains("Native") || it.name.contains("native")) && it.name != "cinteropGumboNative") {
+            it.onlyIf { false }
+        }
+        if (!isLinux) {
+            if (it.name.contains("Linux") || it.name.contains("linux")) {
+                it.onlyIf { false }
+            }
+        }
+    }
+}
+
 kotlin {
     jvm {
         compilations.all {
             kotlinOptions.jvmTarget = '1.8'
         }
     }
-    ios() {
+
+    iosX64() {
         compilations.main.cinterops {
             gumbo
         }
     }
+
+    iosArm64() {
+        compilations.main.cinterops {
+            gumbo
+        }
+    }
+
     macosX64('macos') {
         compilations.main.cinterops {
             gumbo
         }
     }
 
-    if (isLinux) {
-        linuxX64("linux") {
-            compilations.main.cinterops {
-                gumbo
-            }
+    linuxX64("linux") {
+        compilations.main.cinterops {
+            gumbo
         }
     }
+
+    def isMingwX64 = hostOs.startsWith("Windows")
+    org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests nativeTarget
+    if (hostOs == "Mac OS X") nativeTarget = macosX64('native')
+    else if (isLinux) nativeTarget = linuxX64("native")
+    else if (isMingwX64) nativeTarget = mingwX64("native")
+    else throw new GradleException("Host OS is not supported in Kotlin/Native.")
+
+    nativeTarget.compilations.main.cinterops {
+        gumbo
+    }
+
     configure([targets["metadata"], jvm()]) {
         mavenPublication { targetPublication ->
             tasks.withType(AbstractPublishToMaven)
                     .matching { it.publication == targetPublication }
-                    .all {
-                        println "target: " + targetPublication.name
-                        println "pubic: " + it.publication.name
-                        onlyIf { isLinux }
-                    }
+                    .all { onlyIf { isLinux } }
         }
     }
     sourceSets {
@@ -103,30 +132,24 @@ kotlin {
                 implementation kotlin('test-annotations-common')
             }
         }
+
         nativeMain {
             dependsOn(commonMain)
         }
+
         nativeTest {
             dependsOn(commonTest)
         }
-        linuxMain {
-            dependsOn(nativeMain)
-        }
-        linuxTest {
-            dependsOn(nativeTest)
-        }
-        macosMain {
-            dependsOn(nativeMain)
-        }
-        macosTest {
-            dependsOn(nativeTest)
-        }
-        iosMain {
-            dependsOn(nativeMain)
-        }
-        iosTest {
-            dependsOn(nativeTest)
-        }
+
+        linuxMain.kotlin.srcDirs = [file("src/nativeMain")]
+        linuxTest.kotlin.srcDirs = [file("src/nativeTest")]
+        macosMain.kotlin.srcDirs = [file("src/nativeMain")]
+        macosTest.kotlin.srcDirs = [file("src/nativeTest")]
+        iosX64Main.kotlin.srcDirs = [file("src/nativeMain")]
+        iosX64Test.kotlin.srcDirs = [file("src/nativeTest")]
+        iosArm64Main.kotlin.srcDirs = [file("src/nativeMain")]
+        iosArm64Test.kotlin.srcDirs = [file("src/nativeTest")]
+
         jvmMain {
             dependencies {
                 implementation 'org.jsoup:jsoup:1.13.1'
