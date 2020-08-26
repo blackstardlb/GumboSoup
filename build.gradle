@@ -143,6 +143,10 @@ kotlin {
         macosTest.kotlin.srcDirs = [file("src/nativeTest")]
         iosMain.kotlin.srcDirs = [file("src/nativeMain")]
         iosTest.kotlin.srcDirs = [file("src/nativeTest")]
+        iosX64Main.kotlin.srcDirs = [file("src/nativeMain")]
+        iosX64Test.kotlin.srcDirs = [file("src/nativeTest")]
+        iosArm64Main.kotlin.srcDirs = [file("src/nativeMain")]
+        iosArm64Test.kotlin.srcDirs = [file("src/nativeTest")]
 
         jvmMain {
             dependencies {
