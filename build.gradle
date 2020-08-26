@@ -76,7 +76,7 @@ kotlin {
             gumbo
         }
     }
-    configure([targets["metadata"], jvm(), linuxX64()]) {
+    configure([targets["metadata"], jvm(), linuxX64("linux")]) {
         mavenPublication { targetPublication ->
             tasks.withType(AbstractPublishToMaven)
                     .matching { it.publication == targetPublication }
