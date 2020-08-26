@@ -86,7 +86,11 @@ kotlin {
         mavenPublication { targetPublication ->
             tasks.withType(AbstractPublishToMaven)
                     .matching { it.publication == targetPublication }
-                    .all { onlyIf { isLinux } }
+                    .all {
+                        println "target: " + targetPublication.name
+                        println "pubic: " + it.publication.name
+                        onlyIf { isLinux }
+                    }
         }
     }
     sourceSets {
