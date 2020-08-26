@@ -66,11 +66,11 @@ gradle.taskGraph.whenReady { taskGraph ->
         kotlin.targets.remove(nTarget)
     }
     taskGraph.getAllTasks().each {
-        if ((it.name.endsWith("Native") || it.name.startsWith("native")) && it.name != "cinteropGumboNative") {
+        if ((it.name.contains("Native") || it.name.contains("native")) && it.name != "cinteropGumboNative") {
             it.onlyIf { false }
         }
         if (!isLinux) {
-            if (it.name.endsWith("Linux") || it.name.startsWith("linux")) {
+            if (it.name.contains("Linux") || it.name.contains("linux")) {
                 it.onlyIf { false }
             }
         }
