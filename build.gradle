@@ -115,6 +115,7 @@ kotlin {
     iosArm64() {
         compilations.main.cinterops {
             gumboIosArm
+            gumbo
         }
     }
 
@@ -235,16 +236,6 @@ task makeGumbo(type: Exec) {
     commandLine "$vcpkg_script", "install", "gumbo"
     onlyIf { !file("$vcpkg_install_dir/lib/libgumbo.a").exists() }
     finalizedBy { "makeIosArmGumbo" }
-}
-
-task gumboFatFramework(type: FatFrameworkTask) {
-    baseName = "gumbo"
-    destinationDir = file("$buildDir/fat-framework/gumbo")
-    println targets.ios32.binaries.getFramework("DEBUG")
-    from(
-            "$vcpkg_install_dir/lib",
-            "$gumbo_ios_arm_def_file/lib"
-    )
 }
 
 task makeIosArmGumbo(type: Exec) {
