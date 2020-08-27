@@ -1,0 +1,4 @@
+Source: gumbo-query
+Version: 0.0.3
+Homepage: https://github.com/lazytiger/gumbo-query
+Description: A C++ library that provides jQuery-like selectors for Google's Gumbo-Parser.
