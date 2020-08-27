@@ -32,7 +32,7 @@ def getVcpkgInstallDir(vcpkgDir) {
     if (isLinux) {
         dirName = "x64-linux"
     } else if (isMacos) {
-        dirName = "x64-macos"
+        dirName = "x64-osx"
     } else if (isWindows) {
         dirName = "x64-windows"
     } else throw new GradleException("Host OS is not supported in Kotlin/Native.")
