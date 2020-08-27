@@ -54,18 +54,17 @@ ext {
     vcpkg_repo = "https://github.com/microsoft/vcpkg.git"
     vcpkg_branch = "origin/master"
     vcpkg_install_dir = getVcpkgInstallDir(vcpkg_dir)
-    test_dir = new File(buildDir, "vcpkg/installed/x64-linux/lib/")
 }
 
 task generateDefFile() {
     if (!gumbo_def_file.exists()) {
         gumbo_def_file.createNewFile()
         gumbo_def_file.text = """headers = include/gumbo.h
-compilerOpts = -Ibuild/vcpkg/installed/x64-linux
+compilerOpts = -I$vcpkg_install_dir
 staticLibraries.linux = libgumbo.a
 staticLibraries.osx = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
 staticLibraries.ios = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
-libraryPaths = $test_dir 
+libraryPaths = $vcpkg_install_dir 
 """
     }
 }
