@@ -62,8 +62,8 @@ task generateDefFile() {
         gumbo_def_file.text = """headers = include/gumbo.h
 compilerOpts = -I$vcpkg_install_dir
 staticLibraries.linux = libgumbo.a
-staticLibraries.osx = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
-staticLibraries.ios = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
+staticLibraries.osx = libgumbo.a
+staticLibraries.ios = libgumbo.a
 libraryPaths = $vcpkg_install_dir/lib 
 """
     }
