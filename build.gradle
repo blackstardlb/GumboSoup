@@ -64,7 +64,7 @@ compilerOpts = -I$vcpkg_install_dir
 staticLibraries.linux = libgumbo.a
 staticLibraries.osx = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
 staticLibraries.ios = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
-libraryPaths = $vcpkg_install_dir 
+libraryPaths = $vcpkg_install_dir/lib 
 """
     }
 }
@@ -174,6 +174,11 @@ kotlin {
             }
         }
     }
+}
+
+task cleanGumboDef(type: Delete) {
+    delete(gumbo_def_file)
+    tasks.clean.dependsOn(cleanGumboDef)
 }
 
 def getBintrayUserProperty() {
