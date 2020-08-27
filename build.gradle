@@ -74,9 +74,7 @@ libraryPaths = $vcpkg_install_dir/lib
         gumbo_ios_arm_def_file.createNewFile()
         gumbo_ios_arm_def_file.text = """headers = include/gumbo.h
 compilerOpts = -I$vcpkg_install_ios_arm_dir
-staticLibraries.linux = libgumbo.a
-staticLibraries.osx = libgumbo.a
-staticLibraries.ios = libgumbo.a
+staticLibraries = libgumbo.a
 libraryPaths = $vcpkg_install_ios_arm_dir/lib 
 """
     }
