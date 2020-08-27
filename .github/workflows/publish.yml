@@ -13,7 +13,7 @@ jobs:
       - name: Test
         run: ./gradlew allTests
       - name: Publish package
-        run: ./gradlew publish
+        run: ./gradlew publish --info
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
@@ -30,7 +30,7 @@ jobs:
       - name: Test
         run: ./gradlew allTests
       - name: Publish package
-        run: ./gradlew publish
+        run: ./gradlew publish --info
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}

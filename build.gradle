@@ -25,35 +25,61 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.3'
+version = '0.0.4'
+
+def getVcpkgInstallDir(vcpkgDir) {
+    def dirName;
+    if (isLinux) {
+        dirName = "x64-linux"
+    } else if (isMacos) {
+        dirName = "x64-osx"
+    } else if (isWindows) {
+        dirName = "x64-windows"
+    } else throw new GradleException("Host OS is not supported in Kotlin/Native.")
+    return file("$vcpkgDir/installed/$dirName")
+}
 
 ext {
-    gumbo_dir = new File(buildDir, "gumbo-parser")
-    gumbo_repo = "https://github.com/google/gumbo-parser.git"
-    gumbo_branch = "origin/master"
-    gumbo_script = new File(projectDir, "scripts/make-gumbo.sh")
+    hostOs = System.getProperty("os.name")
+    isLinux = hostOs == "Linux"
+    isMacos = hostOs == "Mac OS X"
+    isWindows = hostOs.startsWith("Windows")
     gumbo_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumbo.def")
-    gumbo_lib_dir = new File(gumbo_dir, "output/lib")
+    gumbo_ios_arm_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumboIosArm.def")
     test_resources_folder = new File(projectDir, "src/commonTest/resources")
     bintrayUser = localProperties.get("bintrayUser")
     bintrayApiKey = localProperties.get("bintrayApiKey")
+
+    vcpkg_dir = new File(buildDir, "vcpkg")
+    vcpkg_script = new File(vcpkg_dir, "vcpkg")
+    vcpkg_repo = "https://github.com/microsoft/vcpkg.git"
+    vcpkg_branch = "origin/master"
+    vcpkg_install_dir = getVcpkgInstallDir(vcpkg_dir)
+    vcpkg_install_ios_arm_dir = file("$vcpkg_dir/installed/arm64-ios")
+    vcpkg_install_fat_ios_dir = file("$vcpkg_dir/installed/fat-ios")
 }
 
-task generateDefFile() {
+task generateDefFiles() {
     if (!gumbo_def_file.exists()) {
         gumbo_def_file.createNewFile()
         gumbo_def_file.text = """headers = include/gumbo.h
-compilerOpts = -Ibuild/gumbo-parser/output
-staticLibraries.linux = libgumbo.a libgumbo.la libgumbo.so libgumbo.so.1 libgumbo.so.1.0.0
-staticLibraries.osx = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
-staticLibraries.ios = libgumbo.1.dylib libgumbo.a libgumbo.dylib libgumbo.la
-libraryPaths = $gumbo_lib_dir 
+compilerOpts = -I$vcpkg_install_dir
+staticLibraries.linux = libgumbo.a
+staticLibraries.osx = libgumbo.a
+staticLibraries.ios = libgumbo.a
+libraryPaths = $vcpkg_install_dir/lib 
+"""
+    }
+
+    if (!gumbo_ios_arm_def_file.exists()) {
+        gumbo_ios_arm_def_file.createNewFile()
+        gumbo_ios_arm_def_file.text = """headers = include/gumbo.h
+compilerOpts = -I$vcpkg_install_ios_arm_dir
+staticLibraries = libgumbo.a
+libraryPaths = $vcpkg_install_ios_arm_dir/lib 
 """
     }
 }
-
-def hostOs = System.getProperty("os.name")
-def isLinux = hostOs == "Linux"
 
 gradle.taskGraph.whenReady { taskGraph ->
     def test = taskGraph.getAllTasks().find { it.name == "generateMetadataFileForKotlinMultiplatformPublication" }
@@ -88,6 +114,7 @@ kotlin {
 
     iosArm64() {
         compilations.main.cinterops {
+            gumboIosArm
             gumbo
         }
     }
@@ -104,11 +131,10 @@ kotlin {
         }
     }
 
-    def isMingwX64 = hostOs.startsWith("Windows")
     org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests nativeTarget
-    if (hostOs == "Mac OS X") nativeTarget = macosX64('native')
+    if (isMacos) nativeTarget = macosX64('native')
     else if (isLinux) nativeTarget = linuxX64("native")
-    else if (isMingwX64) nativeTarget = mingwX64("native")
+    else if (isWindows) nativeTarget = mingwX64("native")
     else throw new GradleException("Host OS is not supported in Kotlin/Native.")
 
     nativeTarget.compilations.main.cinterops {
@@ -163,6 +189,20 @@ kotlin {
     }
 }
 
+task cleanGumboDef(type: Delete) {
+    delete(gumbo_def_file)
+}
+
+task cleanGumboIosArmDef(type: Delete) {
+    delete(gumbo_ios_arm_def_file)
+}
+
+task cleanDefFiles(type: Delete) {
+    dependsOn "cleanGumboDef"
+    dependsOn "cleanGumboIosArmDef"
+    tasks.clean.dependsOn(cleanDefFiles)
+}
+
 def getBintrayUserProperty() {
     return bintrayUser != null ? bintrayUser : System.getenv('BINTRAY_USER')
 }
@@ -171,31 +211,38 @@ def getBintrayApiKeyProperty() {
     return bintrayApiKey != null ? bintrayApiKey : System.getenv('BINTRAY_API_KEY')
 }
 
-task cleanGumbo(type: Delete) {
-    delete(gumbo_dir)
-    tasks.clean.dependsOn(cleanGumbo)
+task cleanVcpkg(type: Delete) {
+    delete(vcpkg_dir)
+    tasks.clean.dependsOn(cleanVcpkg)
 }
 
-task cleanGumboDef(type: Delete) {
-    delete(gumbo_def_file)
-    tasks.clean.dependsOn(cleanGumboDef)
-}
-
-task cloneGumbo(dependsOn: cleanGumbo) {
+task cloneVcpkg() {
     doLast {
-        def gr = org.ajoberstar.grgit.Grgit.clone(dir: "$gumbo_dir", uri: "$gumbo_repo")
-        gr.checkout(branch: "$gumbo_branch")
+        def gr = org.ajoberstar.grgit.Grgit.clone(dir: "$vcpkg_dir", uri: "$vcpkg_repo")
+        gr.checkout(branch: "$vcpkg_branch")
     }
+    onlyIf { !vcpkg_dir.exists() }
+}
+
+task bootstrapVcpkg(type: Exec, dependsOn: "cloneVcpkg") {
+    workingDir vcpkg_dir
+    commandLine "$vcpkg_dir/bootstrap-vcpkg.sh"
+    onlyIf { !file("$vcpkg_dir/downloads").exists() }
 }
 
 task makeGumbo(type: Exec) {
-    def shouldRun = !file("$gumbo_dir/output").exists()
-    if (shouldRun) {
-        dependsOn "cloneGumbo"
-    }
-    onlyIf { shouldRun }
-    workingDir gumbo_dir
-    commandLine "$gumbo_script"
+    dependsOn "bootstrapVcpkg"
+    workingDir vcpkg_dir
+    commandLine "$vcpkg_script", "install", "gumbo"
+    onlyIf { !file("$vcpkg_install_dir/lib/libgumbo.a").exists() }
+    finalizedBy { "makeIosArmGumbo" }
+}
+
+task makeIosArmGumbo(type: Exec) {
+    dependsOn "bootstrapVcpkg"
+    workingDir vcpkg_dir
+    commandLine "$vcpkg_script", "install", "--triplet", "arm64-ios", "gumbo"
+    onlyIf { isMacos && !file("$vcpkg_install_ios_arm_dir/lib/libgumbo.a").exists() }
 }
 
 tasks.each {
