@@ -1,8 +1,10 @@
 package nl.blackstardlb.GumboSoup
 
+import nl.blackstardlb.kumbo.GSNode
 
-expect fun parseHtml(html: String): Node
+
+internal expect fun parseHtml(html: String): GSNode
 
 object GumboSoupParser {
-    fun parse(html: String): Node = parseHtml(html)
+    fun parse(html: String): GSNode = parseHtml(html)
 }
