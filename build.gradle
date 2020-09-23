@@ -114,7 +114,9 @@ kotlin {
 
     iosArm64() {
         compilations.main.cinterops {
-            gumboIosArm
+            gumbo {
+                defFile gumbo_ios_arm_def_file
+            }
         }
     }
 
