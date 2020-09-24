@@ -25,7 +25,7 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.6'
+version = '0.0.7'
 
 def getVcpkgInstallDir(vcpkgDir) {
     def dirName;
@@ -56,7 +56,6 @@ ext {
     vcpkg_branch = "origin/master"
     vcpkg_install_dir = getVcpkgInstallDir(vcpkg_dir)
     vcpkg_install_ios_arm_dir = file("$vcpkg_dir/installed/arm64-ios")
-    vcpkg_install_fat_ios_dir = file("$vcpkg_dir/installed/fat-ios")
 }
 
 task generateDefFiles() {
@@ -230,6 +229,15 @@ task bootstrapVcpkg(type: Exec, dependsOn: "cloneVcpkg") {
     workingDir vcpkg_dir
     commandLine "$vcpkg_dir/bootstrap-vcpkg.sh"
     onlyIf { !file("$vcpkg_dir/downloads").exists() }
+    finalizedBy "addBitCodeFlag"
+}
+
+task addBitCodeFlag() {
+    onlyIf { bootstrapVcpkg.didWork }
+    doLast {
+        file("$vcpkg_dir/triplets/community/arm64-ios.cmake").append("set(VCPKG_C_FLAGS \"-fembed-bitcode\")\n" +
+                "set(VCPKG_CXX_FLAGS \"-fembed-bitcode\")")
+    }
 }
 
 task makeGumbo(type: Exec) {
