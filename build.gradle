@@ -25,7 +25,7 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.7'
+version = '0.0.8'
 
 def getVcpkgInstallDir(vcpkgDir) {
     def dirName;
