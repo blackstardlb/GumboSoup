@@ -46,6 +46,7 @@ ext {
     isWindows = hostOs.startsWith("Windows")
     gumbo_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumbo.def")
     gumbo_ios_arm_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumboIosArm.def")
+    gumbo_ios_x64_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumboIosX64.def")
     test_resources_folder = new File(projectDir, "src/commonTest/resources")
     bintrayUser = localProperties.get("bintrayUser")
     bintrayApiKey = localProperties.get("bintrayApiKey")
@@ -56,28 +57,24 @@ ext {
     vcpkg_branch = "origin/master"
     vcpkg_install_dir = getVcpkgInstallDir(vcpkg_dir)
     vcpkg_install_ios_arm_dir = file("$vcpkg_dir/installed/arm64-ios")
+    vcpkg_install_ios_x64_dir = file("$vcpkg_dir/installed/x64-ios")
+}
+
+def createDefFile(defFile, libDir) {
+    if (!defFile.exists()) {
+        defFile.createNewFile()
+        defFile.text = """headers = include/gumbo.h
+compilerOpts = -I$libDir
+staticLibraries = libgumbo.a
+libraryPaths = $libDir/lib 
+"""
+    }
 }
 
 task generateDefFiles() {
-    if (!gumbo_def_file.exists()) {
-        gumbo_def_file.createNewFile()
-        gumbo_def_file.text = """headers = include/gumbo.h
-compilerOpts = -I$vcpkg_install_dir
-staticLibraries.linux = libgumbo.a
-staticLibraries.osx = libgumbo.a
-staticLibraries.ios = libgumbo.a
-libraryPaths = $vcpkg_install_dir/lib 
-"""
-    }
-
-    if (!gumbo_ios_arm_def_file.exists()) {
-        gumbo_ios_arm_def_file.createNewFile()
-        gumbo_ios_arm_def_file.text = """headers = include/gumbo.h
-compilerOpts = -I$vcpkg_install_ios_arm_dir
-staticLibraries = libgumbo.a
-libraryPaths = $vcpkg_install_ios_arm_dir/lib 
-"""
-    }
+    createDefFile(gumbo_def_file, vcpkg_install_dir)
+    createDefFile(gumbo_ios_arm_def_file, vcpkg_install_ios_arm_dir)
+    createDefFile(gumbo_ios_x64_def_file, vcpkg_install_ios_x64_dir)
 }
 
 gradle.taskGraph.whenReady { taskGraph ->
@@ -107,7 +104,10 @@ kotlin {
 
     iosX64() {
         compilations.main.cinterops {
-            gumbo
+            gumbo {
+                defFile gumbo_ios_x64_def_file
+                packageName "gumbo"
+            }
         }
     }
 
@@ -198,9 +198,14 @@ task cleanGumboIosArmDef(type: Delete) {
     delete(gumbo_ios_arm_def_file)
 }
 
+task cleanGumboIosX64Def(type: Delete) {
+    delete(gumbo_ios_x64_def_file)
+}
+
 task cleanDefFiles(type: Delete) {
     dependsOn "cleanGumboDef"
     dependsOn "cleanGumboIosArmDef"
+    dependsOn "cleanGumboIosX64Def"
     tasks.clean.dependsOn(cleanDefFiles)
 }
 
@@ -237,6 +242,8 @@ task addBitCodeFlag() {
     doLast {
         file("$vcpkg_dir/triplets/community/arm64-ios.cmake").append("set(VCPKG_C_FLAGS \"-fembed-bitcode\")\n" +
                 "set(VCPKG_CXX_FLAGS \"-fembed-bitcode\")")
+        file("$vcpkg_dir/triplets/community/x64-ios.cmake").append("set(VCPKG_C_FLAGS \"-fembed-bitcode\")\n" +
+                "set(VCPKG_CXX_FLAGS \"-fembed-bitcode\")")
     }
 }
 
@@ -246,6 +253,7 @@ task makeGumbo(type: Exec) {
     commandLine "$vcpkg_script", "install", "gumbo"
     onlyIf { !file("$vcpkg_install_dir/lib/libgumbo.a").exists() }
     finalizedBy { "makeIosArmGumbo" }
+    finalizedBy { "makeIosX64Gumbo" }
 }
 
 task makeIosArmGumbo(type: Exec) {
@@ -254,6 +262,14 @@ task makeIosArmGumbo(type: Exec) {
     commandLine "$vcpkg_script", "install", "--triplet", "arm64-ios", "gumbo"
     onlyIf { isMacos && !file("$vcpkg_install_ios_arm_dir/lib/libgumbo.a").exists() }
 }
+
+task makeIosX64Gumbo(type: Exec) {
+    dependsOn "bootstrapVcpkg"
+    workingDir vcpkg_dir
+    commandLine "$vcpkg_script", "install", "--triplet", "x64-ios", "gumbo"
+    onlyIf { isMacos && !file("$vcpkg_install_ios_x64_dir/lib/libgumbo.a").exists() }
+}
+
 
 tasks.each {
     if (it.name.startsWith("cinteropGumbo")) {
