@@ -15,5 +15,16 @@ jobs:
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install mingw
+      - name: Cache konan
+        uses: actions/cache@v2
+        env:
+          cache-name: konan-cache
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
       - name: Test
         run: ./gradlew allTests
