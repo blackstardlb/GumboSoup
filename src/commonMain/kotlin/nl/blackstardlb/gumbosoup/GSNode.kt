@@ -1,4 +1,4 @@
-package nl.blackstardlb.kumbo
+package nl.blackstardlb.gumbosoup
 
 interface GSNode {
     val parent: GSNode?
@@ -23,12 +23,19 @@ interface GSNode {
     val document: DocumentGSNode?
         get() = root as? DocumentGSNode
 
+    val text: String
+        get() = this.children.mapNotNull { it.asText() }.joinToString("\n") { it.text }
+
     fun getDescendantById(id: String): ElementGSNode? {
         return this.descendants.elements().firstOrNull { it.id == id }
     }
 
     fun getDescendantsByTag(tag: String): List<ElementGSNode> {
         return this.descendants.elements().filter { it.tag == tag }
+    }
+
+    fun getDescendantsByAttribute(attribute: String, value: String): List<ElementGSNode> {
+        return this.descendants.elements().filter { it.attributes[attribute] == value }
     }
 
     fun getAncestorsByTag(tag: String): List<ElementGSNode> {
@@ -39,6 +46,10 @@ interface GSNode {
         return this.ancestors.elements().firstOrNull { it.id == id }
     }
 
+    fun getAncestorByAttribute(attribute: String, value: String): List<ElementGSNode> {
+        return this.ancestors.elements().filter { it.attributes[attribute] == value }
+    }
+
     fun asDocument(): DocumentGSNode? = this as? DocumentGSNode
     fun asElement(): ElementGSNode? = this as? ElementGSNode
     fun asText(): TextGSNode? = this as? TextGSNode
@@ -46,7 +57,7 @@ interface GSNode {
 }
 
 fun List<GSNode>.elements(): List<ElementGSNode> {
-    return this.mapNotNull { it as? ElementGSNode }
+    return this.mapNotNull { it.asElement() }
 }
 
 internal fun GSNode.fetchDescendants(): List<GSNode> {

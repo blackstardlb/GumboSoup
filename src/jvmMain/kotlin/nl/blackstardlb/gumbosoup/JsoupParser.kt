@@ -1,6 +1,5 @@
-package nl.blackstardlb.GumboSoup
+package nl.blackstardlb.gumbosoup
 
-import nl.blackstardlb.kumbo.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.*
 

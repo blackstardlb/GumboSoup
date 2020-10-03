@@ -1,6 +1,4 @@
-package nl.blackstardlb.GumboSoup
-
-import nl.blackstardlb.kumbo.GSNode
+package nl.blackstardlb.gumbosoup
 
 internal actual fun parseHtml(html: String): GSNode {
     return JsoupParser().parse(html)

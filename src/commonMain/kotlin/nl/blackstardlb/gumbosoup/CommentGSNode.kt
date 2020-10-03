@@ -1,4 +1,4 @@
-package nl.blackstardlb.kumbo
+package nl.blackstardlb.gumbosoup
 
 data class CommentGSNode(val comment: String, override val parent: GSNode?) : GSNode {
     override val children: List<GSNode> = emptyList()

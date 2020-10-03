@@ -1,4 +1,4 @@
-package nl.blackstardlb.kumbo
+package nl.blackstardlb.gumbosoup
 
 import gumbo.*
 import kotlinx.cinterop.*
@@ -13,7 +13,7 @@ class GumboParser {
         return toGumboSoupNode
     }
 
-    fun GumboNode.toGSNode(parent: GSNode?): GSNode {
+    private fun GumboNode.toGSNode(parent: GSNode?): GSNode {
         return when (this.type) {
             GumboNodeType.GUMBO_NODE_ELEMENT -> this.toElement(parent)
             GumboNodeType.GUMBO_NODE_DOCUMENT -> this.toDocument()

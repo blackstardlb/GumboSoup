@@ -1,4 +1,4 @@
-package nl.blackstardlb.GumboSoup
+package nl.blackstardlb.gumbosoup
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

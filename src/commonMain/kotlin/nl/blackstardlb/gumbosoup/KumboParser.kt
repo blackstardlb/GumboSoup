@@ -1,7 +1,4 @@
-package nl.blackstardlb.GumboSoup
-
-import nl.blackstardlb.kumbo.GSNode
-
+package nl.blackstardlb.gumbosoup
 
 internal expect fun parseHtml(html: String): GSNode
 

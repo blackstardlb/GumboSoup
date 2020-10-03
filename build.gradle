@@ -25,7 +25,7 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.8'
+version = '0.0.9'
 
 def getVcpkgInstallDir(vcpkgDir) {
     def dirName;
@@ -34,9 +34,16 @@ def getVcpkgInstallDir(vcpkgDir) {
     } else if (isMacos) {
         dirName = "x64-osx"
     } else if (isWindows) {
-        dirName = "x64-windows"
+        dirName = vcpkg_triplets["windows"]
     } else throw new GradleException("Host OS is not supported in Kotlin/Native.")
     return file("$vcpkgDir/installed/$dirName")
+}
+
+def vcpkgExecutable() {
+    if (isWindows) {
+        return "vcpkg.exe"
+    }
+    return "vcpkg"
 }
 
 ext {
@@ -47,35 +54,40 @@ ext {
     gumbo_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumbo.def")
     gumbo_ios_arm_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumboIosArm.def")
     gumbo_ios_x64_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumboIosX64.def")
+    gumbo_lib = "libgumbo.a"
     test_resources_folder = new File(projectDir, "src/commonTest/resources")
     bintrayUser = localProperties.get("bintrayUser")
     bintrayApiKey = localProperties.get("bintrayApiKey")
 
     vcpkg_dir = new File(buildDir, "vcpkg")
-    vcpkg_script = new File(vcpkg_dir, "vcpkg")
+    vcpkg_script = new File(vcpkg_dir, vcpkgExecutable())
     vcpkg_repo = "https://github.com/microsoft/vcpkg.git"
     vcpkg_branch = "origin/master"
+    vcpkg_triplets = [windows: "x64-mingw-static", iosarm: "arm64-ios", iosx64: "x64-ios"]
     vcpkg_install_dir = getVcpkgInstallDir(vcpkg_dir)
-    vcpkg_install_ios_arm_dir = file("$vcpkg_dir/installed/arm64-ios")
-    vcpkg_install_ios_x64_dir = file("$vcpkg_dir/installed/x64-ios")
+    vcpkg_install_ios_arm_dir = file("$vcpkg_dir/installed/${vcpkg_triplets["iosarm"]}")
+    vcpkg_install_ios_x64_dir = file("$vcpkg_dir/installed/${vcpkg_triplets["iosx64"]}")
 }
 
 def createDefFile(defFile, libDir) {
     if (!defFile.exists()) {
         defFile.createNewFile()
         defFile.text = """headers = include/gumbo.h
-compilerOpts = -I$libDir
-staticLibraries = libgumbo.a
-libraryPaths = $libDir/lib 
+compilerOpts = -I${libDir.toString().replaceAll("\\\\", "/")}
+staticLibraries = $gumbo_lib
+libraryPaths = ${libDir.toString().replaceAll("\\\\", "/")}/lib 
 """
     }
 }
 
 task generateDefFiles() {
+    dependsOn "cleanDefFiles"
     createDefFile(gumbo_def_file, vcpkg_install_dir)
     createDefFile(gumbo_ios_arm_def_file, vcpkg_install_ios_arm_dir)
     createDefFile(gumbo_ios_x64_def_file, vcpkg_install_ios_x64_dir)
 }
+
+println konanHome
 
 gradle.taskGraph.whenReady { taskGraph ->
     def test = taskGraph.getAllTasks().find { it.name == "generateMetadataFileForKotlinMultiplatformPublication" }
@@ -132,6 +144,12 @@ kotlin {
         }
     }
 
+    mingwX64("windows") {
+        compilations.main.cinterops {
+            gumbo
+        }
+    }
+
     org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests nativeTarget
     if (isMacos) nativeTarget = macosX64('native')
     else if (isLinux) nativeTarget = linuxX64("native")
@@ -170,6 +188,8 @@ kotlin {
 
         linuxMain.kotlin.srcDirs = [file("src/nativeMain")]
         linuxTest.kotlin.srcDirs = [file("src/nativeTest")]
+        windowsMain.kotlin.srcDirs = [file("src/nativeMain")]
+        windowsTest.kotlin.srcDirs = [file("src/nativeTest")]
         macosMain.kotlin.srcDirs = [file("src/nativeMain")]
         macosTest.kotlin.srcDirs = [file("src/nativeTest")]
         iosX64Main.kotlin.srcDirs = [file("src/nativeMain")]
@@ -231,9 +251,13 @@ task cloneVcpkg() {
 }
 
 task bootstrapVcpkg(type: Exec, dependsOn: "cloneVcpkg") {
+    def command = "$vcpkg_dir/bootstrap-vcpkg.sh"
+    if (isWindows) {
+        command = "$vcpkg_dir/bootstrap-vcpkg.bat"
+    }
     workingDir vcpkg_dir
-    commandLine "$vcpkg_dir/bootstrap-vcpkg.sh"
-    onlyIf { !file("$vcpkg_dir/downloads").exists() }
+    commandLine command
+    onlyIf { !file("$vcpkg_script").exists() }
     finalizedBy "addBitCodeFlag"
 }
 
@@ -248,10 +272,15 @@ task addBitCodeFlag() {
 }
 
 task makeGumbo(type: Exec) {
+    if (isWindows) {
+        commandLine "$vcpkg_script", "install", "gumbo", "--triplet", "${vcpkg_triplets["windows"]}"
+    } else {
+        commandLine "$vcpkg_script", "install", "gumbo"
+    }
     dependsOn "bootstrapVcpkg"
     workingDir vcpkg_dir
-    commandLine "$vcpkg_script", "install", "gumbo"
-    onlyIf { !file("$vcpkg_install_dir/lib/libgumbo.a").exists() }
+
+    onlyIf { !file("$vcpkg_install_dir/lib/$gumbo_lib").exists() }
     finalizedBy { "makeIosArmGumbo" }
     finalizedBy { "makeIosX64Gumbo" }
 }
