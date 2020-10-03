@@ -4,17 +4,13 @@ on:
     branches:
       - master
 jobs:
-  test-windows:
-    runs-on: windows-latest
+  tests:
+    runs-on: [windows-latest, ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Install mingw64
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install mingw
       - name: Cache konan
         uses: actions/cache@v2
         env:
@@ -27,4 +23,6 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Test
-        run: gradle allTests
+        uses: eskatos/gradle-command-action@v1
+          with:
+            arguments: allTests
