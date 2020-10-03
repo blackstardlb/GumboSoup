@@ -1,4 +1,4 @@
-package nl.blackstardlb.GumboSoup
+package nl.blackstardlb.gumbosoup
 
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.toKString

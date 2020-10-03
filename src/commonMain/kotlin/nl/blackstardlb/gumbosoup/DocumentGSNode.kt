@@ -1,4 +1,4 @@
-package nl.blackstardlb.kumbo
+package nl.blackstardlb.gumbosoup
 
 data class DocumentGSNode(
     val name: String?,

@@ -25,7 +25,7 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.8'
+version = '0.0.9'
 
 def getVcpkgInstallDir(vcpkgDir) {
     def dirName;
@@ -273,8 +273,6 @@ task addBitCodeFlag() {
 
 task makeGumbo(type: Exec) {
     if (isWindows) {
-//        def execPath = "$System.env.PATH" + System.getProperty("path.separator") + "c:/Users/briso/.konan/dependencies/msys2-mingw-w64-x86_64-clang-llvm-lld-compiler_rt-8.0.1/bin/"
-//        environment "PATH", execPath
         commandLine "$vcpkg_script", "install", "gumbo", "--triplet", "${vcpkg_triplets["windows"]}"
     } else {
         commandLine "$vcpkg_script", "install", "gumbo"

@@ -1,4 +1,4 @@
-package nl.blackstardlb.GumboSoup
+package nl.blackstardlb.gumbosoup
 
 actual class ResourceLoader actual constructor() {
     actual fun loadResourceAsString(resourceName: String): String {
