@@ -27,4 +27,4 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Test
-        run: ./gradlew allTests
+        run: gradle allTests
