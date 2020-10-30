@@ -25,7 +25,7 @@ if (propertiesFile.exists()) {
     localProperties.load(propertiesFile.newDataInputStream())
 }
 group = 'nl.blackstardlb'
-version = '0.0.9'
+version = '0.0.10'
 
 def getVcpkgInstallDir(vcpkgDir) {
     def dirName;
@@ -54,7 +54,8 @@ ext {
     gumbo_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumbo.def")
     gumbo_ios_arm_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumboIosArm.def")
     gumbo_ios_x64_def_file = new File(projectDir, "src/nativeInterop/cinterop/gumboIosX64.def")
-    gumbo_lib = "libgumbo.a"
+    gumbo_lib_short_name = "sigil-gumbo"
+    gumbo_lib = "libsigil-gumbo.a"
     test_resources_folder = new File(projectDir, "src/commonTest/resources")
     bintrayUser = localProperties.get("bintrayUser")
     bintrayApiKey = localProperties.get("bintrayApiKey")
@@ -273,9 +274,9 @@ task addBitCodeFlag() {
 
 task makeGumbo(type: Exec) {
     if (isWindows) {
-        commandLine "$vcpkg_script", "install", "gumbo", "--triplet", "${vcpkg_triplets["windows"]}"
+        commandLine "$vcpkg_script", "install", "$gumbo_lib_short_name", "--triplet", "${vcpkg_triplets["windows"]}", "--overlay-ports", "${projectDir}/ports"
     } else {
-        commandLine "$vcpkg_script", "install", "gumbo"
+        commandLine "$vcpkg_script", "install", "$gumbo_lib_short_name", "--overlay-ports", "${projectDir}/ports"
     }
     dependsOn "bootstrapVcpkg"
     workingDir vcpkg_dir
@@ -288,15 +289,15 @@ task makeGumbo(type: Exec) {
 task makeIosArmGumbo(type: Exec) {
     dependsOn "bootstrapVcpkg"
     workingDir vcpkg_dir
-    commandLine "$vcpkg_script", "install", "--triplet", "arm64-ios", "gumbo"
-    onlyIf { isMacos && !file("$vcpkg_install_ios_arm_dir/lib/libgumbo.a").exists() }
+    commandLine "$vcpkg_script", "install", "--triplet", "arm64-ios", "$gumbo_lib_short_name", "--overlay-ports", "${projectDir}/ports"
+    onlyIf { isMacos && !file("$vcpkg_install_ios_arm_dir/lib/$gumbo_lib").exists() }
 }
 
 task makeIosX64Gumbo(type: Exec) {
     dependsOn "bootstrapVcpkg"
     workingDir vcpkg_dir
-    commandLine "$vcpkg_script", "install", "--triplet", "x64-ios", "gumbo"
-    onlyIf { isMacos && !file("$vcpkg_install_ios_x64_dir/lib/libgumbo.a").exists() }
+    commandLine "$vcpkg_script", "install", "--triplet", "x64-ios", "$gumbo_lib_short_name", "--overlay-ports", "${projectDir}/ports"
+    onlyIf { isMacos && !file("$vcpkg_install_ios_x64_dir/lib/$gumbo_lib").exists() }
 }
 
 

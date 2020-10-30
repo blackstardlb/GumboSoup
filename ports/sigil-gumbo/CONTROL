@@ -1,0 +1,4 @@
+Source: sigil-gumbo
+Version: 0.0.1
+Homepage: https://github.com/Sigil-Ebook/sigil-gumbo/
+Description: An HTML5 parsing library in pure C99

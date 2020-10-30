@@ -1,0 +1,21 @@
+vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+
+vcpkg_from_github(
+  OUT_SOURCE_PATH SOURCE_PATH
+  REPO Sigil-Ebook/sigil-gumbo
+  REF b7c6e9ec7847ad32575d9010ab440b92fd3b14b5
+  SHA512  bb272946c38fd9c8a918bee59afe9b942749803c0c2397edd316c3f99e70392487942c5ec8db53b82a14d28051c17a4c32079cbfb00547d29e30dd2649a128bc
+  HEAD_REF master
+)
+
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
+
+vcpkg_configure_cmake(
+    SOURCE_PATH ${SOURCE_PATH}
+    PREFER_NINJA
+    OPTIONS_DEBUG -DDISABLE_INSTALL_HEADERS=ON
+)
+
+vcpkg_install_cmake()
+
+file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/sigil-gumbo RENAME copyright)

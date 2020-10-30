@@ -4,12 +4,10 @@ import gumbo.*
 import kotlinx.cinterop.*
 
 class GumboParser {
-    private val options = kGumboDefaultOptions
-
     fun parse(html: String): GSNode {
-        val output = gumbo_parse_with_options(options.ptr, html, html.length.toULong())
+        val output = gumbo_parse(html)
         val toGumboSoupNode = output!!.pointed.document?.pointed?.toGSNode(null)!!
-        gumbo_destroy_output(options.ptr, output)
+        gumbo_destroy_output(output)
         return toGumboSoupNode
     }
 
